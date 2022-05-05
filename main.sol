@@ -38,17 +38,17 @@ contract simpleMLM{
     }}
     function Staking()external{unchecked{
         for(uint i=0;i<enumUser.length;i++){
-            address a=enumUser[i];
-            if(user[a].lastClaimed>=730 hours&& //31,536,000 seconds a year=exactly 730 hours
-                user[a].dateJoined<=(user[a].package+1)*730 hours){ //Expire contract no money
-                address d1=user[a].upline;
+            address d0=enumUser[i];
+            if(user[d0].lastClaimed>=730 hours&& //31,536,000 seconds a year=exactly 730 hours
+                user[d0].dateJoined<=(user[d0].package+1)*730 hours){ //Expire contract no money
+                address d1=user[d0].upline;
                 address d2=user[d1].upline;
                 address d3=user[d2].upline;
-                uint percent=(user[a].package==3?2:user[a].package==6?3:4)/100; //3 mth=2%, 6 mths=3%, 9 mth=4%
-                uint amt=user[a].investAmt*percent;
+                uint percent=(user[d0].package==3?2:user[d0].package==6?3:4)/100; //3 mth=2%, 6 mths=3%, 9 mth=4%
+                uint amt=user[d0].investAmt*percent;
                 (user[d1].USDT+=amt*1/20,user[d2].USDT+=amt*3/100,user[d3].USDT+=amt*1/50, //USDT=5,3,2 
                     user[d1].token+=amt*1/50,user[d2].token+=amt*3/20,user[d3].token+=amt/10); //Token=20,15,10
-                user[a].lastClaimed=block.timestamp;
+                user[d0].lastClaimed=block.timestamp;
             }
         }
     }}
