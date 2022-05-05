@@ -40,7 +40,8 @@ contract simpleMLM{
                 address d1=user[enumUser[i]].upline;
                 address d2=user[d1].upline;
                 address d3=user[d2].upline;
-                uint amt=user[enumUser[i]].investAmt;
+                uint percent=(user[enumUser[i]].package==3?2:user[enumUser[i]].package==6?3:4)/100;
+                uint amt=user[enumUser[i]].investAmt*percent;
                 (user[d1].USDT+=amt*1/20,user[d2].USDT+=amt*3/100,user[d3].USDT+=amt*1/50, //USDT=5,3,2 
                     user[d1].token+=amt*1/50,user[d2].token+=amt*3/20,user[d3].token+=amt/10); //Token=20,15,10
                 user[enumUser[i]].lastClaimed=block.timestamp;
