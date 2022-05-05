@@ -8,6 +8,7 @@ interface IERC20AC{function transferFrom(address a,address b,uint256 c)external;
 contract simpleMLM{
     address private _owner;
     address[]private enumUser;
+    /*** TO BE REPLACED WITH USDT & TOKEN ADDRESS ***/
     address constant private _USDT=0x540d7E428D5207B30EE03F2551Cbb5751D3c7569;
     address constant private _TOKEN=0x540d7E428D5207B30EE03F2551Cbb5751D3c7569;
     struct User{
@@ -26,7 +27,7 @@ contract simpleMLM{
     }
     function Deposit(address referral,uint amount,uint package)external payable{
         require(referral!=msg.sender);
-        /*** TO BE REPLACED WITH USDT ADDRESS && SET APPROVAL FROM WEB3 FIRST ***/
+        /*** SET APPROVAL FROM WEB3 FIRST ***/
         IERC20(_USDT).transferFrom(msg.sender,address(this),amount*1e18);
         (user[msg.sender].upline,user[msg.sender].package)=
             (referral==0x0000000000000000000000000000000000000000?_owner:referral,package);
