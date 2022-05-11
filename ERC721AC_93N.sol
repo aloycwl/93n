@@ -101,7 +101,7 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
         for(uint i=0;i<enumUser.length;i++){
             address d0=enumUser[i];
             if(user[d0].lastClaimed>=730 hours&& //31,536,000 seconds a year=exactly 730 hours
-                user[d0].dateJoined<=(user[d0].months+1)*730 hours){ //Expire contract no money
+            user[d0].dateJoined<=(user[d0].months+1)*730 hours){ //Expire contract no money
                 (address d1,address d2,address d3)=getUplines(user[d0].upline);
                 uint percent=(user[d0].months==3?2:user[d0].months==6?3:4)/100; //3 mth=2%, 6 mths=3%, 9 mth=4%
                 uint amt=user[d0].wallet*percent;
