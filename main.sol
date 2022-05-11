@@ -12,12 +12,11 @@ contract simpleMLM{
     address[]private enumUser;
     address private _owner;
     /*** TO BE REPLACED WITH USDT & TOKEN ADDRESS ***/
-    address constant private _USDT=0x540d7E428D5207B30EE03F2551Cbb5751D3c7569;
-    address constant private _TOKEN=_USDT;
+    address private constant _USDT=0x55d398326f99059fF775485246999027B3197955;
+    address private constant _TOKEN=0x73a2aa8E0718975Ac05766e0818c36e19b9620B0;
     struct User{
         address upline;
         uint wallet;
-        uint token;
         uint lastClaimed;
         uint dateJoined;
         uint package; 
@@ -33,6 +32,7 @@ contract simpleMLM{
         (user[msg.sender].upline,user[msg.sender].package)=
             (referral==address(0)?_owner:referral,package);
         /*** GET THE TOKEN PRICE FROM PANCAKE SWAP ***/
+        /*** USDT to pay to upline directly ***/
         user[msg.sender].dateJoined=user[msg.sender].lastClaimed=block.timestamp;
         enumUser.push(msg.sender);
     }}
@@ -46,8 +46,8 @@ contract simpleMLM{
                 address d3=user[d2].upline;
                 uint percent=(user[d0].package==3?2:user[d0].package==6?3:4)/100; //3 mth=2%, 6 mths=3%, 9 mth=4%
                 uint amt=user[d0].wallet*percent;
-                (user[d1].wallet+=amt*1/20,user[d2].wallet+=amt*3/100,user[d3].wallet+=amt*1/50, //USDT=5,3,2 
-                    user[d1].token+=amt*1/50,user[d2].token+=amt*3/20,user[d3].token+=amt/10); //Token=20,15,10
+                (user[d1].wallet+=amt*1/20,user[d2].wallet+=amt*3/100,user[d3].wallet+=amt*1/50); //Token=5,3,2 
+                    //user[d1].token+=amt*1/50,user[d2].token+=amt*3/20,user[d3].token+=amt/10); //Token=20,15,10
                 user[d0].lastClaimed=block.timestamp;
             }
         }
