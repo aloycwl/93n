@@ -27,6 +27,7 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
     /*** TO BE REPLACED WITH USDT & TOKEN ADDRESS ***/
     address private constant _USDT=0xeD24FC36d5Ee211Ea25A80239Fb8C4Cfd80f12Ee;
     address private constant _TOKEN=0xE02dF9e3e622DeBdD69fb838bB799E3F168902c5;
+    address private constant _PCSV2=0xD99D1c33F9fC3444f8101754aBC46c52416550D1;
     mapping(uint256=>address)private _owners;
     mapping(uint256=>address)private _tokenApprovals;
     mapping(address=>mapping(address=>bool))private _operatorApprovals;
@@ -85,9 +86,10 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
         IERC20(_USDT).transferFrom(msg.sender,address(this),amount*1e18);
         (user[msg.sender].upline,user[msg.sender].package)=
             (referral==address(0)?_owner:referral,package);
-        /*** GET THE TOKEN PRICE FROM PANCAKE SWAP ***/
-            //0xD99D1c33F9fC3444f8101754aBC46c52416550D1 testnet pancakeswap router
-        
+        address[]memory pair=new address[](2);
+        (pair[0],pair[1])=(_TOKEN,_USDT);
+        uint[]memory currentPrice=IPCSV2(_PCSV2).getAmountsOut(amount,pair);
+
         /*** USDT to pay to upline directly ***/
         user[msg.sender].dateJoined=user[msg.sender].lastClaimed=block.timestamp;
         enumUser.push(msg.sender);
