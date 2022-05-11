@@ -1,5 +1,5 @@
 pragma solidity>0.8.0;//SPDX-License-Identifier:None
-contract ERC20AC_MVT{
+contract ERC20AC_93N{
     event Transfer(address indexed from,address indexed to,uint value);
     event Approval(address indexed owner,address indexed spender,uint value);
     mapping(address=>uint)private _balances;
