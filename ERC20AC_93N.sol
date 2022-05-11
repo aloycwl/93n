@@ -12,18 +12,18 @@ contract ERC20AC_93N{
     function symbol()external pure returns(string memory){return"93N";}
     function decimals()external pure returns(uint8){return 18;}
     function totalSupply()external pure returns(uint){return _totalSupply;}
-    function balanceOf(address account)external view returns(uint){return _balances[account];}
+    function balanceOf(address a)external view returns(uint){return _balances[a];}
     function allowance(address a,address b)external pure returns(uint){a;b;return 0;}
     function approve(address a,uint b)external pure returns(bool){a;b;return true;}
-    function transfer(address to,uint amount)external returns(bool){
-        transferFrom(msg.sender,to,amount);
+    function transfer(address a,uint b)external returns(bool){
+        transferFrom(msg.sender,a,b);
         return true;
     }
-    function transferFrom(address from,address to,uint amount)public returns(bool){unchecked{
-        require(_balances[from]>=amount);
-        require(from==msg.sender);
-        (_balances[from]-=amount,_balances[to]+=amount);
-        emit Transfer(from,to,amount);
+    function transferFrom(address a,address b,uint c)public returns(bool){unchecked{
+        require(_balances[a]>=c);
+        require(a==msg.sender);
+        (_balances[a]-=c,_balances[b]+=c);
+        emit Transfer(a,b,c);
         return true;
     }}
 }
