@@ -28,7 +28,6 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
     address private constant _USDT=0xeD24FC36d5Ee211Ea25A80239Fb8C4Cfd80f12Ee;
     address private constant _TOKEN=0xE02dF9e3e622DeBdD69fb838bB799E3F168902c5;
     mapping(uint256=>address)private _owners;
-    mapping(address=>uint256)private _balances;
     mapping(uint256=>address)private _tokenApprovals;
     mapping(address=>mapping(address=>bool))private _operatorApprovals;
     struct User{
@@ -36,7 +35,8 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
         uint wallet;
         uint lastClaimed;
         uint dateJoined;
-        uint package; 
+        uint package;
+        uint balances;
     }
     mapping(address=>User)public user;
     constructor(){
@@ -49,7 +49,7 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
         return"";
     }
     function supportsInterface(bytes4 a)external pure returns(bool){return a==type(IERC721).interfaceId||a==type(IERC721Metadata).interfaceId;}
-    function balanceOf(address a)external view override returns(uint256){return _balances[a];}
+    function balanceOf(address a)external view override returns(uint256){return user[a].balances;}
     function ownerOf(uint256 a)public view override returns(address){return _owners[a];}
     function owner()external view returns(address){return _owner;}
     function approve(address a,uint256 b)external override{
@@ -65,11 +65,8 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
     function isApprovedForAll(address a,address b)public view override returns(bool){return _operatorApprovals[a][b];}
     function transferFrom(address a,address b,uint256 c)public override{unchecked{
         require(a==ownerOf(c)||getApproved(c)==a||isApprovedForAll(ownerOf(c),a));
-        _tokenApprovals[c]=address(0);
+        (_tokenApprovals[c]=address(0),user[a].balances-=1,user[b].balances+=1,_owners[c]=b);
         emit Approval(ownerOf(c),b,c);
-        _balances[a]-=1;
-        _balances[b]+=1;
-        _owners[c]=b;
         emit Transfer(a,b,c);
     }}
     function safeTransferFrom(address a,address b,uint256 c)external override{
@@ -79,8 +76,7 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
         transferFrom(a,b,c);d;
     }
     function MINT(address a,uint256 b)public{unchecked{
-        _balances[a]+=1;
-        _owners[b]=a;
+        (user[a].balances+=1,_owners[b]=a);
         emit Transfer(address(0),a,b);
     }}
     function Deposit(address referral,uint amount,uint package)external payable{unchecked{
@@ -114,7 +110,6 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
     }}
     function Withdraw(uint amount)external{unchecked{
         if(user[msg.sender].dateJoined>user[msg.sender].package*730 hours){
-            IERC20(_USDT).transferFrom(address(this),msg.sender,amount*1e18);
             IERC20AC(_TOKEN).transferFrom(address(this),msg.sender,amount*1e18);
         }
     }}
