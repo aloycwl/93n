@@ -35,6 +35,7 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
     mapping(address=>mapping(address=>bool))private _operatorApprovals;
     struct User{
         address upline;
+        address[] downline;
         uint wallet;
         uint lastClaimed;
         uint dateJoined;
@@ -93,6 +94,10 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
             (u.balances+=1,_owners[_count]=msg.sender,_count++);
             emit Transfer(address(0),msg.sender,_count);
         }
+
+        uint existed;//Set downline if not existed
+        for(uint i=0;i<user[referral].downline.length;i++)if(msg.sender==user[referral].downline[i])existed=1;
+        if(existed<1)user[referral].downline.push(msg.sender);
 
         (address d1,address d2,address d3)=getUplines(msg.sender); //Paying uplines 5%, 3%, 2% & tech 1%
         IERC20(_USDT).transferFrom(address(this),d1,amount*1/20);
