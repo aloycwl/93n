@@ -136,4 +136,8 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
         d2=user[d1].upline;
         d3=user[d2].upline;
     }
+
+    function getDownlines(address a)external view returns(address[]memory){
+        return user[a].downline;
+    }
 }
