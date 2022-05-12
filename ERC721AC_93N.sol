@@ -78,7 +78,7 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
     function Deposit(address referral,uint amount,uint months)external payable{unchecked{
         require(referral!=msg.sender);
         /*** SET APPROVAL FROM WEB3 FIRST ***/
-        IERC20(_USDT).transferFrom(msg.sender,address(this),amount*1e18); //Deduct package amount
+        IERC20(_USDT).transferFrom(msg.sender,address(this),amount); //Deduct package amount
 
         address[]memory pair=new address[](2); //Getting the current token price
         (pair[0],pair[1])=(_TOKEN,_USDT);
@@ -86,36 +86,46 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
 
         User storage u=user[msg.sender]; //Setting user account & mint NFT
         (u.upline=referral==address(0)?_owner:referral,u.months=months,u.wallet=amount/currentPrice[0],
-        u.dateJoined=block.timestamp,u.lastClaimed=block.timestamp,u.balances+=1,_owners[_count]=msg.sender);
+        u.dateJoined=block.timestamp,u.lastClaimed=block.timestamp);
         enumUser.push(msg.sender);
-        emit Transfer(address(0),msg.sender,_count);
+
+        if(u.balances<0){ //Only mint when user has less than 1 NFT for reinvest
+            (u.balances+=1,_owners[_count]=msg.sender,_count++);
+            emit Transfer(address(0),msg.sender,_count);
+        }
 
         (address d1,address d2,address d3)=getUplines(msg.sender); //Paying uplines 5%, 3%, 2% & tech 1%
-        IERC20(_USDT).transferFrom(address(this),d1,amount*1/20*1e18);
-        IERC20(_USDT).transferFrom(address(this),d2,amount*3/100*1e18);
-        IERC20(_USDT).transferFrom(address(this),d3,amount*1/50*1e18);
-        IERC20(_USDT).transferFrom(address(this),_TECH,amount*1/100*1e18);
+        IERC20(_USDT).transferFrom(address(this),d1,amount*1/20);
+        IERC20(_USDT).transferFrom(address(this),d2,amount*3/100);
+        IERC20(_USDT).transferFrom(address(this),d3,amount*1/50);
+        IERC20(_USDT).transferFrom(address(this),_TECH,amount*1/100);
     }}
 
     function Staking()external{unchecked{
         for(uint i=0;i<enumUser.length;i++){
-            address d0=enumUser[i];
-            if(user[d0].lastClaimed>=730 hours&& //31,536,000 seconds a year=exactly 730 hours
-            user[d0].dateJoined<=(user[d0].months+1)*730 hours){ //Expire contract no money
-                (address d1,address d2,address d3)=getUplines(user[d0].upline);
-                uint percent=(user[d0].months==3?2:user[d0].months==6?3:4)/100; //3 mth=2%, 6 mths=3%, 9 mth=4%
-                uint amt=user[d0].wallet*percent;
-                (user[d1].wallet+=amt*1/20,user[d2].wallet+=amt*3/100,user[d3].wallet+=amt*1/50); //Token=5,3,2 
-                    //user[d1].token+=amt*1/50,user[d2].token+=amt*3/20,user[d3].token+=amt/10); //Token=20,15,10
-                user[d0].lastClaimed=block.timestamp;
+            address d0=enumUser[i]; //31,536,000 seconds a year=exactly 730 hours
+            (uint timeClaimed,uint timeJoined,uint wallet)=
+            (block.timestamp-user[d0].lastClaimed,block.timestamp-user[d0].dateJoined,user[msg.sender].wallet);
+            if(timeJoined<(user[d0].months+1)*730 hours){ //Still within contract
+                if(timeClaimed>=1 hours){
+                    (address d1,address d2,address d3)=getUplines(user[d0].upline);
+                    uint amt=timeClaimed/730*user[d0].wallet*(user[d0].months==3?2:user[d0].months==6?3:4)/100;
+                    //Prorate + 3=2%, 6=3%, 9=4%
+                    IERC20AC(_TOKEN).transferFrom(address(this),d1,amt*23/400); //5%+15% of 5% = 575/10000
+                    IERC20AC(_TOKEN).transferFrom(address(this),d2,amt*33/1000); //3%+10% of 3%
+                    IERC20AC(_TOKEN).transferFrom(address(this),d3,amt*21/10000); //2%+5% of 2%
+                    user[d0].lastClaimed=block.timestamp;
+                }
+            }else if(wallet>0){ //Slowly release 40-30-30, ranging from 3rd, 2nd, 1st month
+                if(timeJoined>=(user[d0].months+3)*730 hours)wallet=wallet;
+                else if(timeJoined>=(user[d0].months+2)*730 hours)wallet=wallet*3/10;
+                else wallet=wallet*2/5;
+                IERC20AC(_TOKEN).transferFrom(address(this),msg.sender,wallet);
+                user[msg.sender].wallet-=wallet;
             }
         }
     }}
-    function Withdraw(uint amount)external{unchecked{
-        if(user[msg.sender].dateJoined>user[msg.sender].months*730 hours){
-            IERC20AC(_TOKEN).transferFrom(address(this),msg.sender,amount*1e18);
-        }
-    }}
+
     function getUplines(address a)public view returns(address d1,address d2,address d3){
         d1=user[a].upline;
         d2=user[d1].upline;
