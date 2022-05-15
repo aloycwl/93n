@@ -102,10 +102,10 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
                 if(timeClaimed>=1 hours){
                     (address d1,address d2,address d3)=getUplines(user[d0].upline);
                     uint amt=timeClaimed/730*user[d0].wallet*(user[d0].months==3?2:user[d0].months==6?3:4)/100;
-                    //Prorate + 3=2%, 6=3%, 9=4%
-                    IERC20(_TOKEN).transferFrom(address(this),d1,amt*23/400); //5%+15% of 5% = 575/10000
-                    IERC20(_TOKEN).transferFrom(address(this),d2,amt*33/1000); //3%+10% of 3%
-                    IERC20(_TOKEN).transferFrom(address(this),d3,amt*21/10000); //2%+5% of 2%
+                    //Prorate + 15%,10%,5%
+                    IERC20(_TOKEN).transferFrom(address(this),d1,amt*1/20);
+                    IERC20(_TOKEN).transferFrom(address(this),d2,amt*1/10);
+                    IERC20(_TOKEN).transferFrom(address(this),d3,amt*3/20);
                     user[d0].lastClaimed=block.timestamp;
                 }
             }else if(wallet>0){ //Slowly release 40-30-30, ranging from 3rd, 2nd, 1st month
@@ -118,13 +118,39 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
         }
     }}
 
+    //function private 
+
     function getUplines(address a)private view returns(address d1,address d2,address d3){
         d1=user[a].upline;
         d2=user[d1].upline;
         d3=user[d2].upline;
     }
 
-    function getDownlines(address a)external view returns(address[]memory){
-        return user[a].downline;
+    function getDownlines(address a)external view returns(address[]memory b,address[]memory c,address[]memory d){
+        uint d2Length; //Get counts first
+        uint d3Length;
+        b=user[a].downline;
+        for(uint i=0;i<b.length;i++){
+            address[]memory c1=user[b[i]].downline;
+            for(uint j=0;j<c1.length;j++){
+                address[]memory d1=user[c1[j]].downline;
+                d2Length++;
+                for(uint k=0;k<d1.length;k++)d3Length++;
+            }
+        }
+        (c,d)=(new address[](d2Length),new address[](d2Length)); //Fill in each downlines
+        (d2Length,d3Length)=(0,0);
+        for(uint i=0;i<b.length;i++){
+            address[]memory c1=user[b[i]].downline;
+            for(uint j=0;j<c1.length;j++){
+                address[]memory d1=user[c1[j]].downline;
+                c[d2Length]=d1[j];
+                d2Length++;
+                for(uint k=0;k<d1.length;k++){
+                    d[d3Length]=user[d1[j]].downline[k];
+                    d3Length++;
+                }
+            }
+        }
     }
 }
