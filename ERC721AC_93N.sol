@@ -6,6 +6,7 @@ interface IERC20{function transferFrom(address,address,uint)external;}
 interface IPCSV2{function getAmountsOut(uint,address[]memory)external returns(uint[]memory);}
 contract ERC721AC_93N is IERC721,IERC721Metadata{
     event Payout(address indexed from,address indexed to,uint amount,uint indexed status); //0in,1n,2stake,3out
+    uint public Split;
     uint private _count;
     address private _owner;
     address[]private enumUser;
@@ -60,7 +61,7 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
     function Deposit(address referral,uint amount,uint months)external payable{unchecked{
         require(referral!=msg.sender);
         (address d1,address d2,address d3)=getUplines(msg.sender); //Uplines 2%|5%, 3%|10%, 5%|15% & tech 1%
-        _payment(_USDT,msg.sender,address(this),amount,0); //Deduct package amount
+        _payment(_USDT,msg.sender,address(this),amount,0);
         _payment4(_USDT,address(this),[d1,d2,d3,_TECH],[amount*1/50,amount*3/100,amount*1/20,amount*1/100],0);
 
         address[]memory pair=new address[](2); //Get live price
@@ -86,7 +87,7 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
         d2=user[d1].upline;
         d3=user[d2].upline;
     }
-    
+
     function _payment(address con,address from,address to,uint amt,uint status)private{
         IERC20(con).transferFrom(from,to,amt);
         emit Payout(from,to,amt,status);
@@ -106,20 +107,23 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
             if(timeJoined<(user[d0].months+1)*730 hours){ //Still within contract
                 if(timeClaimed>=1 hours){
                     uint amt=timeClaimed/730*user[d0].wallet*(user[d0].months==3?2:user[d0].months==6?3:4)/100;
-                    //Prorate + 15%,10%,5%
-                    (address d1,address d2,address d3)=getUplines(user[d0].upline);
+                    (address d1,address d2,address d3)=getUplines(d0); //Prorate + 15%,10%,5%
                     _payment4(_TOKEN,address(this),[d1,d2,d3,d0],[amt*1/20,amt*1/10,amt*3/20,amt],2);
                     user[d0].lastClaimed=block.timestamp;
                 }
-            }else if(wallet>0){ //Slowly release 40-30-30, ranging from 3rd, 2nd, 1st month
-                if(timeJoined>=(user[d0].months+3)*730 hours)wallet=wallet;
-                else if(timeJoined>=(user[d0].months+2)*730 hours)wallet=wallet*3/10;
-                else wallet=wallet*2/5;
+            }else if(wallet>0){ //Release 4-3-3 / Split
+                if(timeJoined>=(user[d0].months+3*Split)*730 hours)wallet=wallet/Split;
+                else wallet*=wallet*2/5/Split;
+                user[d0].wallet-=wallet;
                 _payment(_TOKEN,address(this),d0,wallet,3);
-                user[msg.sender].wallet-=wallet;
             }
         }
     }}
+
+    function SetSplit(uint num)external{
+        require(msg.sender==_owner);
+        Split=num;
+    }
 
     function getDownlines(address a)external view returns(address[]memory b,address[]memory c,address[]memory d){
         uint d2Length; //Get counts first
