@@ -131,7 +131,7 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
         }
     }}
 
-    function getUplines(address a)public view returns(address d1,address d2,address d3){
+    function getUplines(address a)private view returns(address d1,address d2,address d3){
         d1=user[a].upline;
         d2=user[d1].upline;
         d3=user[d2].upline;
