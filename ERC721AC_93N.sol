@@ -24,7 +24,6 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
         uint lastClaimed;
         uint dateJoined;
         uint months;
-        uint balances;
     }
     mapping(address=>User)public user;
     constructor(){
@@ -37,7 +36,7 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
         return months>6?"ipfs://9months":months>3?"ipfs://6months":"ipfs://3months";
     }
     function supportsInterface(bytes4 a)external pure returns(bool){return a==type(IERC721).interfaceId||a==type(IERC721Metadata).interfaceId;}
-    function balanceOf(address a)external view override returns(uint){return user[a].balances;}
+    function balanceOf(address a)external view override returns(uint){return user[a].dateJoined>0?1:0;}
     function ownerOf(uint a)external view returns(address){return _owners[a];}
     function owner()external view returns(address){return _owner;}
     function approve(address a,uint b)external override{require(msg.sender==_owners[b]||isApprovedForAll(_owners[b],msg.sender));_tokenApprovals[b]=a;emit Approval(_owners[b],a,b);}
@@ -48,7 +47,13 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
     function safeTransferFrom(address a,address b,uint c,bytes memory d)external override{transferFrom(a,b,c);d;}
     function transferFrom(address a,address b,uint c)public override{unchecked{
         require(a==_owners[c]||getApproved(c)==a||isApprovedForAll(_owners[c],a));
-        (_tokenApprovals[c]=address(0),user[a].balances-=1,user[b].balances+=1,_owners[c]=b);
+        require(user[b].dateJoined<1);
+        (_tokenApprovals[c]=address(0),_owners[c]=b,user[b]=user[a]); //Full transfer begins
+        delete user[a];
+        for(uint i=0;i<enumUser.length;i++)if(enumUser[i]==a){ //Less one for scanning
+            enumUser[i]=enumUser[enumUser.length-1];
+            enumUser.pop();
+        }
         emit Approval(_owners[c],b,c);
         emit Transfer(a,b,c);
     }}
@@ -60,21 +65,17 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
         address[]memory pair=new address[](2); //Getting the current token price
         (pair[0],pair[1])=(_TOKEN,_USDT);
         uint[]memory currentPrice=IPCSV2(_PCSV2).getAmountsOut(amount,pair);
-        uint tokens=amount/currentPrice[0];
-
-        User storage u=user[msg.sender]; //Setting user account & mint NFT
+        
+        (uint tokens,User storage u)=(amount/currentPrice[0],user[msg.sender]); //Set user account
         (u.upline=referral==address(0)?_owner:referral,u.months=months,u.wallet=tokens,
         u.dateJoined=block.timestamp,u.lastClaimed=block.timestamp);
         enumUser.push(msg.sender);
 
-        if(u.balances<0){ //Only mint when user has less than 1 NFT for reinvest
-            (u.balances+=1,_owners[_count]=msg.sender,_count++);
+        if(u.dateJoined<1){ //Mint and assign as downline if is new user
+            (_owners[_count]=msg.sender,_count++);
+            user[referral].downline.push(msg.sender);
             emit Transfer(address(0),msg.sender,_count);
         }
-
-        uint existed;//Set downline if not existed
-        for(uint i=0;i<user[referral].downline.length;i++)if(msg.sender==user[referral].downline[i])existed=1;
-        if(existed<1)user[referral].downline.push(msg.sender);
 
         (address d1,address d2,address d3)=getUplines(msg.sender); //Uplines 2%|5%, 3%|10%, 5%|15% & tech 1%
         _payment(_USDT,address(this),d1,amount*1/50,1);
