@@ -4,7 +4,7 @@ interface IERC721Metadata{function name()external view returns(string memory);fu
 interface IERC20{function transferFrom(address,address,uint)external;}
 interface IPCSV2{function getAmountsOut(uint,address[]memory)external returns(uint[]memory);}
 contract ERC721AC_93N is IERC721,IERC721Metadata{
-    event Payout(address indexed to,uint amount,uint indexed payType);
+    event Payout(address indexed from,address indexed to,uint amount,uint indexed status); //0-in,1-usdt,2-93n,3-stake,4-out,5-tech
     uint private _count;
     address private _owner;
     address[]private enumUser;
@@ -54,7 +54,7 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
 
     function Deposit(address referral,uint amount,uint months)external payable{unchecked{
         require(referral!=msg.sender); /*** SET APPROVAL FROM WEB3 FIRST ***/
-        IERC20(_USDT).transferFrom(msg.sender,address(this),amount); //Deduct package amount
+        _payment(_USDT,msg.sender,address(this),amount,0); //Deduct package amount
 
         address[]memory pair=new address[](2); //Getting the current token price
         (pair[0],pair[1])=(_TOKEN,_USDT);
@@ -75,7 +75,7 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
         for(uint i=0;i<user[referral].downline.length;i++)if(msg.sender==user[referral].downline[i])existed=1;
         if(existed<1)user[referral].downline.push(msg.sender);
 
-        (address d1,address d2,address d3)=getUplines(msg.sender); //Paying uplines 2%|5%, 3%|10%, 5%|15% & tech 1%
+        (address d1,address d2,address d3)=getUplines(msg.sender); //Uplines 2%|5%, 3%|10%, 5%|15% & tech 1%
         IERC20(_USDT).transferFrom(address(this),d1,amount*1/50);
         IERC20(_USDT).transferFrom(address(this),d2,amount*3/100);
         IERC20(_USDT).transferFrom(address(this),d3,amount*1/20);
@@ -85,6 +85,17 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
         IERC20(_TOKEN).transferFrom(address(this),d3,tokens*3/20);
     }}
 
+    function getUplines(address a)private view returns(address d1,address d2,address d3){
+        d1=user[a].upline;
+        d2=user[d1].upline;
+        d3=user[d2].upline;
+    }
+
+    function _payment(address con,address from,address to,uint amt,uint status)private{
+        IERC20(con).transferFrom(from,to,amt);
+        emit Payout(from,to,amt,status);
+    }
+
     function Staking()external{unchecked{
         for(uint i=0;i<enumUser.length;i++){
             address d0=enumUser[i]; //31,536,000 seconds a year=exactly 730 hours
@@ -92,9 +103,9 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
             (block.timestamp-user[d0].lastClaimed,block.timestamp-user[d0].dateJoined,user[msg.sender].wallet);
             if(timeJoined<(user[d0].months+1)*730 hours){ //Still within contract
                 if(timeClaimed>=1 hours){
-                    (address d1,address d2,address d3)=getUplines(user[d0].upline);
                     uint amt=timeClaimed/730*user[d0].wallet*(user[d0].months==3?2:user[d0].months==6?3:4)/100;
                     //Prorate + 15%,10%,5%
+                    (address d1,address d2,address d3)=getUplines(user[d0].upline);
                     IERC20(_TOKEN).transferFrom(address(this),d1,amt*1/20);
                     IERC20(_TOKEN).transferFrom(address(this),d2,amt*1/10);
                     IERC20(_TOKEN).transferFrom(address(this),d3,amt*3/20);
@@ -112,11 +123,7 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
 
     //function private 
 
-    function getUplines(address a)private view returns(address d1,address d2,address d3){
-        d1=user[a].upline;
-        d2=user[d1].upline;
-        d3=user[d2].upline;
-    }
+    
 
     function getDownlines(address a)external view returns(address[]memory b,address[]memory c,address[]memory d){
         uint d2Length; //Get counts first
