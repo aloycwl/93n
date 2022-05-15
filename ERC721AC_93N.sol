@@ -24,6 +24,7 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
         uint lastClaimed;
         uint dateJoined;
         uint months;
+        uint totalDeposit;
     }
     mapping(address=>User)public user;
     constructor(){
@@ -32,8 +33,8 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
     function name()external pure override returns(string memory){return"Ninety Three N";}
     function symbol()external pure override returns(string memory){return"93N";}
     function tokenURI(uint a)external view override returns(string memory){
-        uint months=user[_owners[a]].months;
-        return months>6?"ipfs://9months":months>3?"ipfs://6months":"ipfs://3months";
+        uint total=user[_owners[a]].totalDeposit;
+        return total>=1e23?"ipfs://100kVVVIP":total>=1e22?"ipfs://10kVVIP":"ipfs://1kVIP";
     }
     function supportsInterface(bytes4 a)external pure returns(bool){return a==type(IERC721).interfaceId||a==type(IERC721Metadata).interfaceId;}
     function balanceOf(address a)external view override returns(uint){return user[a].dateJoined>0?1:0;}
@@ -70,7 +71,7 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
         
         (uint tokens,User storage u)=(amount/currentPrice[0],user[msg.sender]); //Set user account
         (u.upline=referral==address(0)?_owner:referral,u.months=months,u.wallet=tokens,
-        u.dateJoined=block.timestamp,u.lastClaimed=block.timestamp);
+        u.dateJoined=u.lastClaimed=block.timestamp,u.totalDeposit+=amount);
         enumUser.push(msg.sender);
 
         if(u.dateJoined<1){ //Mint and assign as downline if is new user
