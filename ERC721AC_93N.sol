@@ -29,8 +29,8 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
     constructor(){
         _owner=user[msg.sender].upline=msg.sender;
     }
-    function name()external pure override returns(string memory){return "Ninety Three N";}
-    function symbol()external pure override returns(string memory){return "93N";}
+    function name()external pure override returns(string memory){return"Ninety Three N";}
+    function symbol()external pure override returns(string memory){return"93N";}
     function tokenURI(uint a)external view override returns(string memory){
         uint months=user[_owners[a]].months;
         return months>6?"ipfs://9months":months>3?"ipfs://6months":"ipfs://3months";
@@ -39,29 +39,21 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
     function balanceOf(address a)external view override returns(uint){return user[a].balances;}
     function ownerOf(uint a)external view returns(address){return _owners[a];}
     function owner()external view returns(address){return _owner;}
-    function approve(address a,uint b)external override{
-        require(msg.sender==_owners[b]||isApprovedForAll(_owners[b],msg.sender));
-        _tokenApprovals[b]=a;
-        emit Approval(_owners[b],a,b);
-    }
-    function setApprovalForAll(address a,bool b)external override{
-        _operatorApprovals[msg.sender][a]=b;
-        emit ApprovalForAll(msg.sender,a,b);
-    }
+    function approve(address a,uint b)external override{require(msg.sender==_owners[b]||isApprovedForAll(_owners[b],msg.sender));_tokenApprovals[b]=a;emit Approval(_owners[b],a,b);}
+    function setApprovalForAll(address a,bool b)external override{_operatorApprovals[msg.sender][a]=b;emit ApprovalForAll(msg.sender,a,b);}
     function getApproved(uint a)public view override returns(address){return _tokenApprovals[a];}
     function isApprovedForAll(address a,address b)public view override returns(bool){return _operatorApprovals[a][b];}
+    function safeTransferFrom(address a,address b,uint c)external override{transferFrom(a,b,c);}
+    function safeTransferFrom(address a,address b,uint c,bytes memory d)external override{transferFrom(a,b,c);d;}
     function transferFrom(address a,address b,uint c)public override{unchecked{
         require(a==_owners[c]||getApproved(c)==a||isApprovedForAll(_owners[c],a));
         (_tokenApprovals[c]=address(0),user[a].balances-=1,user[b].balances+=1,_owners[c]=b);
         emit Approval(_owners[c],b,c);
         emit Transfer(a,b,c);
     }}
-    function safeTransferFrom(address a,address b,uint c)external override{transferFrom(a,b,c);}
-    function safeTransferFrom(address a,address b,uint c,bytes memory d)external override{transferFrom(a,b,c);d;}
 
     function Deposit(address referral,uint amount,uint months)external payable{unchecked{
-        require(referral!=msg.sender);
-        /*** SET APPROVAL FROM WEB3 FIRST ***/
+        require(referral!=msg.sender); /*** SET APPROVAL FROM WEB3 FIRST ***/
         IERC20(_USDT).transferFrom(msg.sender,address(this),amount); //Deduct package amount
 
         address[]memory pair=new address[](2); //Getting the current token price
@@ -144,12 +136,9 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
             address[]memory c1=user[b[i]].downline;
             for(uint j=0;j<c1.length;j++){
                 address[]memory d1=user[c1[j]].downline;
-                c[d2Length]=d1[j];
-                d2Length++;
-                for(uint k=0;k<d1.length;k++){
-                    d[d3Length]=user[d1[j]].downline[k];
-                    d3Length++;
-                }
+                (c[d2Length]=d1[j],d2Length++);
+                for(uint k=0;k<d1.length;k++) (d[d3Length]=user[d1[j]].downline[k],d3Length++);
+                
             }
         }
     }
