@@ -1,15 +1,14 @@
+/*** [DEPLOYMEN] CHANGE TOKEN ADDRESSES & WEB3 APPROVAL FIRST ***/
 pragma solidity>0.8.0;//SPDX-License-Identifier:None
 interface IERC721{event Transfer(address indexed from,address indexed to,uint indexed tokenId);event Approval(address indexed owner,address indexed approved,uint indexed tokenId);event ApprovalForAll(address indexed owner,address indexed operator,bool approved);function balanceOf(address)external view returns(uint);function safeTransferFrom(address,address,uint)external;function transferFrom(address,address,uint)external;function approve(address,uint)external;function getApproved(uint)external view returns(address);function setApprovalForAll(address,bool)external;function isApprovedForAll(address,address)external view returns(bool);function safeTransferFrom(address,address,uint,bytes calldata)external;}
 interface IERC721Metadata{function name()external view returns(string memory);function symbol()external view returns(string memory);function tokenURI(uint)external view returns(string memory);}
 interface IERC20{function transferFrom(address,address,uint)external;}
 interface IPCSV2{function getAmountsOut(uint,address[]memory)external returns(uint[]memory);}
 contract ERC721AC_93N is IERC721,IERC721Metadata{
-    //0-in,1-usdt,2-93n,3-stake,4-stake-up,5-out,6-tech
-    event Payout(address indexed from,address indexed to,uint amount,uint indexed status); 
+    event Payout(address indexed from,address indexed to,uint amount,uint indexed status); //0in,1n,2stake,3out
     uint private _count;
     address private _owner;
     address[]private enumUser;
-    /*** TO BE REPLACED WITH USDT & TOKEN ADDRESS ***/
     address private constant _USDT=0xeD24FC36d5Ee211Ea25A80239Fb8C4Cfd80f12Ee;
     address private constant _TOKEN=0xE02dF9e3e622DeBdD69fb838bB799E3F168902c5;
     address private constant _PCSV2=0xD99D1c33F9fC3444f8101754aBC46c52416550D1;
@@ -59,10 +58,12 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
     }}
 
     function Deposit(address referral,uint amount,uint months)external payable{unchecked{
-        require(referral!=msg.sender); /*** SET APPROVAL FROM WEB3 FIRST ***/
+        require(referral!=msg.sender);
+        (address d1,address d2,address d3)=getUplines(msg.sender); //Uplines 2%|5%, 3%|10%, 5%|15% & tech 1%
         _payment(_USDT,msg.sender,address(this),amount,0); //Deduct package amount
+        _payment4(_USDT,address(this),[d1,d2,d3,_TECH],[amount*1/50,amount*3/100,amount*1/20,amount*1/100],0);
 
-        address[]memory pair=new address[](2); //Getting the current token price
+        address[]memory pair=new address[](2); //Get live price
         (pair[0],pair[1])=(_TOKEN,_USDT);
         uint[]memory currentPrice=IPCSV2(_PCSV2).getAmountsOut(amount,pair);
         
@@ -77,14 +78,7 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
             emit Transfer(address(0),msg.sender,_count);
         }
 
-        (address d1,address d2,address d3)=getUplines(msg.sender); //Uplines 2%|5%, 3%|10%, 5%|15% & tech 1%
-        _payment(_USDT,address(this),d1,amount*1/50,1);
-        _payment(_USDT,address(this),d2,amount*3/100,1);
-        _payment(_USDT,address(this),d3,amount*1/20,1);
-        _payment(_USDT,address(this),_TECH,amount*1/100,6);
-        _payment(_TOKEN,address(this),d1,tokens*1/20,2);
-        _payment(_TOKEN,address(this),d2,tokens*1/10,2);
-        _payment(_TOKEN,address(this),d3,tokens*3/20,2);
+        _payment4(_USDT,address(this),[d1,d2,d3,address(0)],[tokens*1/20,tokens*1/10,tokens*3/20,0],1);
     }}
 
     function getUplines(address a)private view returns(address d1,address d2,address d3){
@@ -92,10 +86,16 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
         d2=user[d1].upline;
         d3=user[d2].upline;
     }
-
+    
     function _payment(address con,address from,address to,uint amt,uint status)private{
         IERC20(con).transferFrom(from,to,amt);
         emit Payout(from,to,amt,status);
+    }
+    function _payment4(address con,address from,address[4]memory to,uint[4]memory amt,uint status)private{
+        for(uint i=0;i<5;i++){
+            if(to[i]==address(0))return;
+            _payment(con,from,to[i],amt[i],status);
+        }
     }
 
     function Staking()external{unchecked{
@@ -108,17 +108,14 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
                     uint amt=timeClaimed/730*user[d0].wallet*(user[d0].months==3?2:user[d0].months==6?3:4)/100;
                     //Prorate + 15%,10%,5%
                     (address d1,address d2,address d3)=getUplines(user[d0].upline);
-                    _payment(_TOKEN,address(this),d0,amt,3);
-                    _payment(_TOKEN,address(this),d1,amt*1/20,4);
-                    _payment(_TOKEN,address(this),d2,amt*1/10,4);
-                    _payment(_TOKEN,address(this),d3,amt*3/20,4);
+                    _payment4(_TOKEN,address(this),[d1,d2,d3,d0],[amt*1/20,amt*1/10,amt*3/20,amt],2);
                     user[d0].lastClaimed=block.timestamp;
                 }
             }else if(wallet>0){ //Slowly release 40-30-30, ranging from 3rd, 2nd, 1st month
                 if(timeJoined>=(user[d0].months+3)*730 hours)wallet=wallet;
                 else if(timeJoined>=(user[d0].months+2)*730 hours)wallet=wallet*3/10;
                 else wallet=wallet*2/5;
-                _payment(_TOKEN,address(this),d0,wallet,5);
+                _payment(_TOKEN,address(this),d0,wallet,3);
                 user[msg.sender].wallet-=wallet;
             }
         }
