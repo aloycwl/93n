@@ -34,7 +34,7 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
     function symbol()external pure override returns(string memory){return"93N";}
     function tokenURI(uint a)external view override returns(string memory){
         uint total=user[_owners[a]].totalDeposit;
-        return total>=1e23?"ipfs://100kVVVIP":total>=1e22?"ipfs://10kVVIP":"ipfs://1kVIP";
+        return total>=1e23?"ipfs://RedRuby":total>=1e22?"ipfs://RoyalGold":"ipfs://BlackSapphire";
     }
     function supportsInterface(bytes4 a)external pure returns(bool){return a==type(IERC721).interfaceId||a==type(IERC721Metadata).interfaceId;}
     function balanceOf(address a)external view override returns(uint){return user[a].dateJoined>0?1:0;}
