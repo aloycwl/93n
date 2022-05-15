@@ -1,26 +1,26 @@
 pragma solidity>0.8.0;//SPDX-License-Identifier:None
 interface IERC721{
-    event Transfer(address indexed a,address indexed b,uint indexed c);
-    event Approval(address indexed a,address indexed b,uint indexed c);
-    event ApprovalForAll(address indexed a,address indexed b,bool c);
-    function balanceOf(address a)external view returns(uint b);
-    function ownerOf(uint a)external view returns(address b);
-    function safeTransferFrom(address a,address b,uint c)external;
-    function transferFrom(address a,address b,uint c)external;
-    function approve(address a,uint b)external;
-    function getApproved(uint a)external view returns(address b);
-    function setApprovalForAll(address a,bool b)external;
-    function isApprovedForAll(address a,address b)external view returns(bool);
-    function safeTransferFrom(address a,address b,uint c,bytes calldata d)external;
+    event Transfer(address indexed from,address indexed to,uint256 indexed tokenId);
+    event Approval(address indexed owner,address indexed approved,uint256 indexed tokenId);
+    event ApprovalForAll(address indexed owner,address indexed operator,bool approved);
+    function balanceOf(address)external view returns(uint);
+    function ownerOf(uint)external view returns(address);
+    function safeTransferFrom(address,address,uint)external;
+    function transferFrom(address,address,uint)external;
+    function approve(address,uint)external;
+    function getApproved(uint)external view returns(address);
+    function setApprovalForAll(address,bool)external;
+    function isApprovedForAll(address,address)external view returns(bool);
+    function safeTransferFrom(address,address,uint,bytes calldata)external;
 }
 interface IERC721Metadata{
     function name()external view returns(string memory);
     function symbol()external view returns(string memory);
-    function tokenURI(uint a)external view returns(string memory);
+    function tokenURI(uint)external view returns(string memory);
 }
-interface IERC20{function transferFrom(address a,address b,uint c)external;}
-interface IERC20AC{function transferFrom(address a,address b,uint c)external;}
-interface IPCSV2{function getAmountsOut(uint amountIn,address[]memory path)external returns(uint[]memory);}
+interface IERC20{function transferFrom(address,address,uint)external;}
+interface IERC20AC{function transferFrom(address,address,uint)external;}
+interface IPCSV2{function getAmountsOut(uint,address[]memory)external returns(uint[]memory);}
 contract ERC721AC_93N is IERC721,IERC721Metadata{
     uint private _count;
     address private _owner;
