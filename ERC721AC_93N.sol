@@ -140,7 +140,6 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
                 address[]memory d1=user[c1[j]].downline;
                 (c[d2Length]=d1[j],d2Length++);
                 for(uint k=0;k<d1.length;k++)(d[d3Length]=user[d1[j]].downline[k],d3Length++);
-                
             }
         }
     }
