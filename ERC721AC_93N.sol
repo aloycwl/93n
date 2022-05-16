@@ -64,29 +64,23 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
         (address d1,address d2,address d3)=getUplines(msg.sender); //Uplines 2%|5%, 3%|10%, 5%|15% & tech 1%
         _payment(_USDT,msg.sender,address(this),amount,0);
         _payment4(_USDT,address(this),[d1,d2,d3,_TECH],[amount*1/50,amount*3/100,amount*1/20,amount*1/100],0);
-
         address[]memory pair=new address[](2); //Get live price
         (pair[0],pair[1])=(_TOKEN,_USDT);
         uint[]memory currentPrice=IPCSV2(_PCSV2).getAmountsOut(amount,pair);
-        
         (uint tokens,User storage u)=(amount/currentPrice[0],user[msg.sender]); //Set user account
         (u.upline=referral==address(0)?_owner:referral,u.months=months,u.wallet=tokens,
         u.dateJoined=u.lastClaimed=block.timestamp,u.totalDeposit+=amount);
         enumUser.push(msg.sender);
-
         if(u.dateJoined<1){ //Mint and assign as downline if is new user
             (_owners[_count]=msg.sender,_count++);
             user[referral].downline.push(msg.sender);
             emit Transfer(address(0),msg.sender,_count);
         }
-
         _payment4(_USDT,address(this),[d1,d2,d3,address(0)],[tokens*1/20,tokens*1/10,tokens*3/20,0],1);
     }}
 
     function getUplines(address a)private view returns(address d1,address d2,address d3){
-        d1=user[a].upline;
-        d2=user[d1].upline;
-        d3=user[d2].upline;
+        (d1=user[a].upline,d2=user[d1].upline,d3=user[d2].upline);
     }
 
     function _payment(address con,address from,address to,uint amt,uint status)private{
@@ -145,7 +139,7 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
             for(uint j=0;j<c1.length;j++){
                 address[]memory d1=user[c1[j]].downline;
                 (c[d2Length]=d1[j],d2Length++);
-                for(uint k=0;k<d1.length;k++) (d[d3Length]=user[d1[j]].downline[k],d3Length++);
+                for(uint k=0;k<d1.length;k++)(d[d3Length]=user[d1[j]].downline[k],d3Length++);
                 
             }
         }
