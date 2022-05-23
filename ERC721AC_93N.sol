@@ -1,21 +1,17 @@
 /*** [DEPLOYMEN] CHANGE TOKEN ADDRESSES & WEB3 APPROVAL FIRST ***/
 pragma solidity>0.8.0;//SPDX-License-Identifier:None
-import"https://github.com/aloycwl/ERC_AC/blob/main/ERC721AC/more/standard_interface.sol";
+import"https://github.com/aloycwl/ERC_AC/blob/main/ERC721AC/ERC721AC.sol";
 interface IERC20{function transferFrom(address,address,uint)external;}
 interface IPCSV2{function getAmountsOut(uint,address[]memory)external returns(uint[]memory);}
-contract ERC721AC_93N is IERC721,IERC721Metadata{
+contract ERC721AC_93N is ERC721AC{
     event Payout(address indexed from,address indexed to,uint amount,uint indexed status); //0in,1n,2stake,3out
     uint public Split;
     uint private _count;
-    address private _owner;
     address[]private enumUser;
     address private constant _USDT=0xeD24FC36d5Ee211Ea25A80239Fb8C4Cfd80f12Ee;
     address private constant _TOKEN=0xE02dF9e3e622DeBdD69fb838bB799E3F168902c5;
     address private constant _PCSV2=0xD99D1c33F9fC3444f8101754aBC46c52416550D1;
     address private constant _TECH=0x15eD406870dB283E810D5885e432d315C94DD0dd;
-    mapping(uint=>address)private _owners;
-    mapping(uint=>address)private _tokenApprovals;
-    mapping(address=>mapping(address=>bool))private _operatorApprovals;
     struct User{
         address upline;
         address[] downline;
@@ -35,16 +31,7 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
         uint total=user[_owners[a]].totalDeposit;
         return total>=1e23?"ipfs://RedRuby":total>=1e22?"ipfs://RoyalGold":"ipfs://BlackSapphire";
     }
-    function supportsInterface(bytes4 a)external pure returns(bool){return a==type(IERC721).interfaceId||a==type(IERC721Metadata).interfaceId;}
     function balanceOf(address a)external view override returns(uint){return user[a].dateJoined>0?1:0;}
-    function ownerOf(uint a)external view override returns(address){return _owners[a];}
-    function owner()external view returns(address){return _owner;}
-    function approve(address a,uint b)external override{require(msg.sender==_owners[b]||isApprovedForAll(_owners[b],msg.sender));_tokenApprovals[b]=a;emit Approval(_owners[b],a,b);}
-    function setApprovalForAll(address a,bool b)external override{_operatorApprovals[msg.sender][a]=b;emit ApprovalForAll(msg.sender,a,b);}
-    function getApproved(uint a)public view override returns(address){return _tokenApprovals[a];}
-    function isApprovedForAll(address a,address b)public view override returns(bool){return _operatorApprovals[a][b];}
-    function safeTransferFrom(address a,address b,uint c)external override{transferFrom(a,b,c);}
-    function safeTransferFrom(address a,address b,uint c,bytes memory d)external override{transferFrom(a,b,c);d;}
     function transferFrom(address a,address b,uint c)public override{unchecked{
         require(a==_owners[c]||getApproved(c)==a||isApprovedForAll(_owners[c],a));
         require(user[b].dateJoined<1);
