@@ -14,7 +14,7 @@ contract ERC721AC_93N is ERC721AC{
     address private constant _TECH=0x15eD406870dB283E810D5885e432d315C94DD0dd;
     struct User{
         address upline;
-        address[] downline;
+        address[]downline;
         uint wallet;
         uint lastClaimed;
         uint dateJoined;
@@ -29,7 +29,9 @@ contract ERC721AC_93N is ERC721AC{
     function symbol()external pure override returns(string memory){return"93N";}
     function tokenURI(uint a)external view override returns(string memory){
         uint total=user[_owners[a]].totalDeposit;
-        return total>=1e23?"ipfs://RedRuby":total>=1e22?"ipfs://RoyalGold":"ipfs://BlackSapphire";
+        return total>=1e23?"ipfs://bafybeigotmg4hsqw6dunfu5is5wfobk7wtikzk4uimbtd43wbr56pf7aba/red.png":
+        total>=1e22?"ipfs://bafybeig4vcqmyuxdsv7jwrrh22mznoqbqv2pd75yucltc5wqid2oia6tr4/gold.png":
+        "ipfs://https://ipfs.io/ipfs/bafybeiampsworvim5pktw6iuji2rwceltrunpzjndahdarb4ydtri644ha/black.png";
     }
     function balanceOf(address a)external view override returns(uint){return user[a].dateJoined>0?1:0;}
     function transferFrom(address a,address b,uint c)public override{unchecked{
@@ -107,10 +109,10 @@ contract ERC721AC_93N is ERC721AC{
     }
 
     function getDownlines(address a)external view returns(address[]memory b,address[]memory c,address[]memory d){
-        uint d2Length; //Get counts first
+        uint d2Length;
         uint d3Length;
         b=user[a].downline;
-        for(uint i=0;i<b.length;i++){
+        for(uint i=0;i<b.length;i++){ //Get total level 2 and 3 counts
             address[]memory c1=user[b[i]].downline;
             for(uint j=0;j<c1.length;j++){
                 address[]memory d1=user[c1[j]].downline;
@@ -118,8 +120,7 @@ contract ERC721AC_93N is ERC721AC{
                 for(uint k=0;k<d1.length;k++)d3Length++;
             }
         }
-        (c,d)=(new address[](d2Length),new address[](d2Length)); //Fill in each downlines
-        (d2Length,d3Length)=(0,0);
+        (c,d,d2Length,d3Length)=(new address[](d2Length),new address[](d2Length),0,0); //Fill in each downlines
         for(uint i=0;i<b.length;i++){
             address[]memory c1=user[b[i]].downline;
             for(uint j=0;j<c1.length;j++){
