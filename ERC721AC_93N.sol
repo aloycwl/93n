@@ -46,7 +46,6 @@ contract ERC721AC_93N is ERC721AC{
         emit Approval(_owners[c],b,c);
         emit Transfer(a,b,c);
     }}
-
     function Deposit(address referral,uint amount,uint months)external payable{unchecked{
         require(referral!=msg.sender);
         (address d1,address d2,address d3)=getUplines(msg.sender); //Uplines 2%|5%, 3%|10%, 5%|15% & tech 1%
@@ -66,11 +65,9 @@ contract ERC721AC_93N is ERC721AC{
         }
         _payment4(_USDT,address(this),[d1,d2,d3,address(0)],[tokens*1/20,tokens*1/10,tokens*3/20,0],1);
     }}
-
     function getUplines(address a)private view returns(address d1,address d2,address d3){
         (d1=user[a].upline,d2=user[d1].upline,d3=user[d2].upline);
     }
-
     function _payment(address con,address from,address to,uint amt,uint status)private{
         IERC20(con).transferFrom(from,to,amt);
         emit Payout(from,to,amt,status);
@@ -81,7 +78,6 @@ contract ERC721AC_93N is ERC721AC{
             _payment(con,from,to[i],amt[i],status);
         }
     }
-
     function Staking()external{unchecked{
         for(uint i=0;i<enumUser.length;i++){
             address d0=enumUser[i]; //31,536,000 seconds a year=exactly 730 hours
@@ -102,12 +98,10 @@ contract ERC721AC_93N is ERC721AC{
             }
         }
     }}
-
     function SetSplit(uint num)external{
         require(msg.sender==_owner);
         Split=num;
     }
-
     function getDownlines(address a)external view returns(address[]memory b,address[]memory c,address[]memory d){
         uint d2Length;
         uint d3Length;
