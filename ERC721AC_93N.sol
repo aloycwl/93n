@@ -36,7 +36,7 @@ contract ERC721AC_93N is ERC721AC{
     function balanceOf(address a)external view override returns(uint){return user[a].dateJoined>0?1:0;}
     function transferFrom(address a,address b,uint c)public override{unchecked{
         require(a==_owners[c]||getApproved(c)==a||isApprovedForAll(_owners[c],a));
-        require(user[b].dateJoined<1);
+        require(user[b].dateJoined<1); //Cannot transfer to existing member
         (_tokenApprovals[c]=address(0),_owners[c]=b,user[b]=user[a]); //Full transfer begins
         delete user[a];
         for(uint i=0;i<enumUser.length;i++)if(enumUser[i]==a){ //Less one for scanning
