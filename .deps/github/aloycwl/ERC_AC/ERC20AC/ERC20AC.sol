@@ -36,7 +36,7 @@ contract ERC20AC{
         emit Approval(msg.sender,a,b);
         return true;
     }
-    function transferFrom(address a,address b,uint c)public returns(bool){unchecked{
+    function transferFrom(address a,address b,uint c)public virtual returns(bool){unchecked{
         require(_balances[a]>=c);
         require(a==msg.sender||_allowances[a][b]>=c);
         (_balances[a]-=c,_balances[b]+=c);

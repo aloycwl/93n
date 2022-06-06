@@ -24,7 +24,9 @@ contract ERC721AC is IERC721,IERC721Metadata{
     mapping(address=>uint)internal _balances;
     mapping(uint=>address)internal _tokenApprovals;
     mapping(address=>mapping(address=>bool))internal _operatorApprovals;
-    constructor(){}
+    constructor(){
+        _owner=msg.sender;
+    }
     function supportsInterface(bytes4 a)external pure returns(bool){
         return a==type(IERC721).interfaceId||a==type(IERC721Metadata).interfaceId;
     }
