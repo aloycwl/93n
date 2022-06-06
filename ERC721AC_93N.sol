@@ -8,6 +8,10 @@ contract ERC721AC_93N is ERC721AC{
     uint public Split;
     uint private _count;
     address[]private enumUser;
+    /*
+    Require all the addresses to get live price from PanCakeSwap
+    And to transfer using interface directly
+    */
     address private constant _USDT=0xeD24FC36d5Ee211Ea25A80239Fb8C4Cfd80f12Ee;
     address private constant _TOKEN=0xE02dF9e3e622DeBdD69fb838bB799E3F168902c5;
     address private constant _PCSV2=0xD99D1c33F9fC3444f8101754aBC46c52416550D1;
@@ -35,11 +39,20 @@ contract ERC721AC_93N is ERC721AC{
     }
     function balanceOf(address a)external view override returns(uint){return user[a].dateJoined>0?1:0;}
     function transferFrom(address a,address b,uint c)public override{unchecked{
+        /*
+        Normal ERC721 token applies
+        User can only transfer to not an existing user
+        */
         require(a==_owners[c]||getApproved(c)==a||isApprovedForAll(_owners[c],a));
-        require(user[b].dateJoined<1); //Cannot transfer to existing member
-        (_tokenApprovals[c]=address(0),_owners[c]=b,user[b]=user[a]); //Full transfer begins
+        require(user[b].dateJoined<1);
+        /*
+        Entire user will be duplicated to the new user where
+        The old user will be deleted
+        Enum will be updated too for each week's payout
+        */
+        (_tokenApprovals[c]=address(0),_owners[c]=b,user[b]=user[a]);
         delete user[a];
-        for(uint i=0;i<enumUser.length;i++)if(enumUser[i]==a){ //Less one for scanning
+        for(uint i=0;i<enumUser.length;i++)if(enumUser[i]==a){
             enumUser[i]=enumUser[enumUser.length-1];
             enumUser.pop();
         }
@@ -81,31 +94,59 @@ contract ERC721AC_93N is ERC721AC{
         }
     }}
     function getUplines(address a)private view returns(address d1,address d2,address d3){
+        /*
+        Get direct first
+        Use previous direct to get next direct and so on
+        */
         (d1=user[a].upline,d2=user[d1].upline,d3=user[d2].upline);
     }
     function _payment(address con,address from,address to,uint amt,uint status)private{
+        /*
+        Custom connection to the various token address
+        Emit events for history
+        */
         IERC20(con).transferFrom(from,to,amt);
         emit Payout(from,to,amt,status);
     }
     function _payment4(address con,address from,address[4]memory to,uint[4]memory amt,uint status)private{
-        for(uint i=0;i<5;i++){
+        /*
+        Payout loop of 4 iterations
+        Exit fuction (for payment of USDT) if no address found
+        */
+        for(uint i=0;i<4;i++){
             if(to[i]==address(0))return;
             _payment(con,from,to[i],amt[i],status);
         }
     }
     function Staking()external{unchecked{
+        /*
+        Go through every users and pay them and their upline accordingly
+        31,536,000 seconds a year=exactly 730 hours
+        Get last claim and time joined to accurately payout
+        */
         for(uint i=0;i<enumUser.length;i++){
-            address d0=enumUser[i]; //31,536,000 seconds a year=exactly 730 hours
+            address d0=enumUser[i];
             (uint timeClaimed,uint timeJoined,uint wallet)=
             (block.timestamp-user[d0].lastClaimed,block.timestamp-user[d0].dateJoined,user[msg.sender].wallet);
-            if(timeJoined<(user[d0].months+1)*730 hours){ //Still within contract
+            /*
+            As long as user still in contract
+            Pro-rated payment in case this function is being called more than once a week
+            Token payment direct to wallet in term of 15%, 10%, 5%
+            Update user last claim if claimed
+            */
+            if(timeJoined<(user[d0].months+1)*730 hours){
                 if(timeClaimed>=1 hours){
                     uint amt=timeClaimed/730*user[d0].wallet*(user[d0].months==3?2:user[d0].months==6?3:4)/100;
-                    (address d1,address d2,address d3)=getUplines(d0); //Prorate + 15%,10%,5%
+                    (address d1,address d2,address d3)=getUplines(d0); 
                     _payment4(_TOKEN,address(this),[d1,d2,d3,d0],[amt*1/20,amt*1/10,amt*3/20,amt],2);
                     user[d0].lastClaimed=block.timestamp;
                 }
-            }else if(wallet>0){ //Release 4-3-3 / Split
+            /*
+            If user decided not to continue
+            Release to 4-3-3 in month
+            Months are divided if split is modified
+            */
+            }else if(wallet>0){
                 if(timeJoined>=(user[d0].months+3*Split)*730 hours)wallet=wallet/Split;
                 else wallet*=wallet*2/5/Split;
                 user[d0].wallet-=wallet;
@@ -114,6 +155,9 @@ contract ERC721AC_93N is ERC721AC{
         }
     }}
     function SetSplit(uint num)external{
+        /*
+        Modifying the split to slow down the withdrawal
+        */
         require(msg.sender==_owner);
         Split=num;
     }
@@ -121,7 +165,11 @@ contract ERC721AC_93N is ERC721AC{
         uint d2Length;
         uint d3Length;
         b=user[a].downline;
-        for(uint i=0;i<b.length;i++){ //Get total level 2 and 3 counts
+        /*
+        Loop through all level 2 and level 3 downlines
+        Create new array counts
+        */
+        for(uint i=0;i<b.length;i++){
             address[]memory c1=user[b[i]].downline;
             for(uint j=0;j<c1.length;j++){
                 address[]memory d1=user[c1[j]].downline;
@@ -129,7 +177,10 @@ contract ERC721AC_93N is ERC721AC{
                 for(uint k=0;k<d1.length;k++)d3Length++;
             }
         }
-        (c,d,d2Length,d3Length)=(new address[](d2Length),new address[](d2Length),0,0); //Fill in each downlines
+        (c,d,d2Length,d3Length)=(new address[](d2Length),new address[](d2Length),0,0);
+        /*
+        Fill the count with actual address
+        */
         for(uint i=0;i<b.length;i++){
             address[]memory c1=user[b[i]].downline;
             for(uint j=0;j<c1.length;j++){
