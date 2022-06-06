@@ -48,22 +48,37 @@ contract ERC721AC_93N is ERC721AC{
     }}
     function Deposit(address referral,uint amount,uint months)external payable{unchecked{
         require(referral!=msg.sender);
-        (address d1,address d2,address d3)=getUplines(msg.sender); //Uplines 2%|5%, 3%|10%, 5%|15% & tech 1%
+        /*
+        Uplines & tech to get USDT 5%, 3%, 2% & tech 1%
+        Getting uplines for payout
+        */
+        (address d1,address d2,address d3)=getUplines(msg.sender); 
         _payment(_USDT,msg.sender,address(this),amount,0);
-        _payment4(_USDT,address(this),[d1,d2,d3,_TECH],[amount*1/50,amount*3/100,amount*1/20,amount*1/100],0);
-        address[]memory pair=new address[](2); //Get live price
+        _payment4(_USDT,address(this),[d1,d2,d3,_TECH],[amount*1/20,amount*3/100,amount*1/50,amount*1/100],0);
+        /*
+        Connect to PanCakeSwap to get the live price
+        Issue the number of tokens in equivalent to USDT
+        Initiate new user
+        Uplines to get tokens 5%, 10%, 15%
+        */
+        address[]memory pair=new address[](2); 
         (pair[0],pair[1])=(_TOKEN,_USDT);
         uint[]memory currentPrice=IPCSV2(_PCSV2).getAmountsOut(amount,pair);
-        (uint tokens,User storage u)=(amount/currentPrice[0],user[msg.sender]); //Set user account
-        (u.upline=referral==address(0)?_owner:referral,u.months=months,u.wallet=tokens,
-        u.dateJoined=u.lastClaimed=block.timestamp,u.totalDeposit+=amount);
-        enumUser.push(msg.sender);
-        if(u.dateJoined<1){ //Mint and assign as downline if is new user
+        (uint tokens,User storage u)=(amount/currentPrice[0],user[msg.sender]);
+        (u.months=months,u.wallet=tokens,u.dateJoined=u.lastClaimed=block.timestamp,u.totalDeposit+=amount);
+        _payment4(_TOKEN,address(this),[d1,d2,d3,address(0)],[tokens*1/20,tokens*1/10,tokens*3/20,0],0);
+        /*
+        Only mint and set variable when user is new
+        Only set upline and downline when user is new
+        Add user into enumUser for counting purposes
+        */
+        if(u.dateJoined<1){
+            u.upline=referral==address(0)?_owner:referral;
             (_owners[_count]=msg.sender,_count++);
             user[referral].downline.push(msg.sender);
+            enumUser.push(msg.sender);
             emit Transfer(address(0),msg.sender,_count);
         }
-        _payment4(_USDT,address(this),[d1,d2,d3,address(0)],[tokens*1/20,tokens*1/10,tokens*3/20,0],1);
     }}
     function getUplines(address a)private view returns(address d1,address d2,address d3){
         (d1=user[a].upline,d2=user[d1].upline,d3=user[d2].upline);
