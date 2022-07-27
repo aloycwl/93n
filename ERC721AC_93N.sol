@@ -1,6 +1,5 @@
 /***
 [DEPLOYMENT] CHANGE TOKEN ADDRESSES
-web3 - open up 1st level first, then info only open up accordingly
 ***/
 pragma solidity>0.8.0;//SPDX-License-Identifier:None
 interface IERC721{
@@ -53,9 +52,8 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
     mapping(uint=>address)private _tokenApprovals;
     mapping(address=>User)private user;
     mapping(address=>mapping(address=>bool))private _operatorApprovals;
-    constructor(address _U,address _T){
-        (_A[0]=user[msg.sender].upline=msg.sender,_A[1]=_U,_A[2]=_T,
-        _A[3]=0xD99D1c33F9fC3444f8101754aBC46c52416550D1,_A[4]=0xdD870fA1b7C4700F2BD7f44238821C26f7392148);
+    constructor(address USDT,address T93N,address Swap, address Tech){
+        (_A[0]=user[msg.sender].upline=msg.sender,_A[1]=USDT,_A[2]=T93N,_A[3]=Swap,_A[4]=Tech);
         /*
         Add permanent packages for 0 and 4 to bypass payment checking
         */
@@ -148,7 +146,6 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
             if(user[to[i]].packages.length>0)_payment(con,from,usr,to[i],amt[i],status);
         }
     }}
-
     function Deposit(address referral,uint amount,uint months)external{unchecked{
         require(months==3||months==6||months==9);
         require(amount>=1e20);
@@ -249,6 +246,3 @@ contract ERC721AC_93N is IERC721,IERC721Metadata{
         return user[a].packages;
     }
 }
-
-// 1000000000000000000000
-// 0x0000000000000000000000000000000000000000
